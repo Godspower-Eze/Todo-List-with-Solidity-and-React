@@ -1,4 +1,4 @@
-function Todo({text,todo, setTodoList, todos}){
+function Todo({content,todo, setTodoList, todos}){
     // const deleteTodoList = (event) => {
     //     setTodoList(todos.filter(el => el.id !== todo.id))
     // }
@@ -15,7 +15,7 @@ function Todo({text,todo, setTodoList, todos}){
     // }
     return (
         <div className="todo">
-            <li className='todo-item'>Hey</li>
+            <li className='todo-item'>{content}</li>
             <button className="complete-btn"><i className="fas fa-check"></i></button>
             <button className="trash-btn"><i className="fas fa-trash"></i></button>
         </div>

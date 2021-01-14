@@ -1,14 +1,10 @@
-function Form({inputText,setInputText,todos,setTodoList, setStatus}){
+function Form({inputText,setInputText,todos,setTodoList, setStatus, contractInstance, setContractInstance, account}){
     const inputHandeler = (event) =>{
         setInputText(event.target.value)
     }
-    const sumbitTextHandler = (event) =>{
+    const sumbitTextHandler = async (event) =>{
         event.preventDefault()
-        setTodoList([
-            ...todos,
-            {text:inputText,completed:false, id:Math.random()*1000}]
-        )
-        setInputText('')
+        await contractInstance.methods.createTasks(inputText).send({from:account})
     }
     const statusHandler = (event) => {
         setStatus(event.target.value)

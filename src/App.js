@@ -9,9 +9,11 @@ import TodoListContract from './abis/TodoList.json'
 function App() {
 
   const [inputText, setInputText] = useState('');
-  const [todos, setTodoList] = useState([])
   const [status, setStatus] = useState('all')
   const [filterTodos, setFilterTodos] = useState([])
+  const [account, getBlockchainData] = useState('')
+  const [todos, setTodoList] = useState([])
+  const [contractInstance, setContractInstance] = useState('')
   
   // useEffect( () => {
   //   getFromLocalStorage()
@@ -49,14 +51,13 @@ function App() {
   //   }
   // }
 
-  const [accounts, getBlockchainData] = useState('')
+
 
   useEffect(() => {
     async function runLoadWeb3() {
       await loadWeb3()
       await getData()
-      console.log(
-        loadWeb3())
+      console.log(todos)
     }
     runLoadWeb3();
   },[])
@@ -65,18 +66,23 @@ function App() {
   async function getData(){
     const web3 = window.web3
 
-    const accounts = await web3.eth.getAccounts()
-    getBlockchainData(accounts)
+    const account = await web3.eth.getAccounts()
+    getBlockchainData(account[0])
 
     // Network ID
     const networkID = await web3.eth.net.getId()
-    console.log(networkID)
 
     const networkData = TodoListContract.networks[networkID]
 
+
     if (networkID){
-      const contract = web3.eth.Contract(TodoListContract.abi, networkData)
-      console.log(contract)
+      const contract = new web3.eth.Contract(TodoListContract.abi, networkData.address)
+      setContractInstance(contract)
+      const taskCount = await contract.methods.taskCount().call()
+      for(var i=1; i <= taskCount; i++){
+        const task = await contract.methods.tasks(i).call()
+        setTodoList([...todos, task])
+      }
     }else{
       window.alert("Smart contract not deployed to the block chain")
     }
@@ -99,8 +105,8 @@ function App() {
     <header>
       <h1>Simple To Do</h1>
     </header>
-    <Form inputText={inputText} setInputText={setInputText} todos={todos} setTodoList={setTodoList} setStatus={setStatus} />
-    <TodoList todos={todos} setTodoList={setTodoList} filterTodos={filterTodos}/>
+    <Form inputText={inputText} setInputText={setInputText} todos={todos} setTodoList={setTodoList} setStatus={setStatus} contractInstance={contractInstance} setContractInstance={setContractInstance} account={account} />
+    <TodoList todos={todos} setTodoList={setTodoList} filterTodos={filterTodos} contractInstance={contractInstance} setContractInstance={setContractInstance}/>
     </div>
   );
 }
