@@ -6,14 +6,17 @@ import Form from './components/Form'
 import TodoList from './components/TodoList'
 import TodoListContract from './abis/TodoList.json'
 
+const address = '0xD2c90d9f819b4A0AD66afBc9F382121B788d19aa'
+
 function App() {
 
   const [inputText, setInputText] = useState('');
   const [status, setStatus] = useState('all')
   const [filterTodos, setFilterTodos] = useState([])
-  const [account, getBlockchainData] = useState('')
   const [todos, setTodoList] = useState([])
   const [contractInstance, setContractInstance] = useState('')
+  const [userAddresss, setuserAddresss] = useState('')
+
   
   // useEffect( () => {
   //   getFromLocalStorage()
@@ -51,7 +54,11 @@ function App() {
   //   }
   // }
 
-
+  function createTasks(content){
+    contractInstance.methods.createTasks(content).send({from: userAddresss}).once('receipt',(receipt)=>{
+      console.log(receipt)
+    })
+  }
 
   useEffect(() => {
     async function runLoadWeb3() {
@@ -64,48 +71,31 @@ function App() {
    
 
   async function getData(){
-    const web3 = window.web3
-
-    const account = await web3.eth.getAccounts()
-    getBlockchainData(account[0])
-
-    // Network ID
-    const networkID = await web3.eth.net.getId()
-
-    const networkData = TodoListContract.networks[networkID]
-
-
-    if (networkID){
-      const contract = new web3.eth.Contract(TodoListContract.abi, networkData.address)
-      setContractInstance(contract)
-      const taskCount = await contract.methods.taskCount().call()
-      for(var i=1; i <= taskCount; i++){
-        const task = await contract.methods.tasks(i).call()
-        setTodoList([...todos, task])
-      }
-    }else{
-      window.alert("Smart contract not deployed to the block chain")
-    }
+  
   }
 
   const loadWeb3 = async () => {
-    if (window.ethereum){
-      window.web3 = new Web3(window.ethereum)
-      await window.ethereum.enable()
-    }
-    else if (window.web3){
-      window.web3 = new Web3(window.currentProvider)
-    }
-    else{
-      window.alert("Non-Ethereum browser detected. You should consider trying metamask")
+    const web3 = new Web3("http://localhost:8545")
+    const network = await web3.eth.net.getNetworkType()
+    const accounts = await web3.eth.getAccounts()
+    setuserAddresss(accounts[0])
+    const todoList = new web3.eth.Contract(TodoListContract.abi,address)
+    setContractInstance(todoList)
+    const taskCount = await todoList.methods.taskCount().call()
+
+    for (var i=1;i<=taskCount;i++){
+      const task = await todoList.methods.tasks(i).call()
+      setTodoList([...todos,task])
+      console.log(task)
     }
   }
   return (
-<div  className="App">
+  <div className="App">
     <header>
-      <h1>Simple To Do</h1>
+      <h5>Todo By: {userAddresss}</h5>
     </header>
-    <Form inputText={inputText} setInputText={setInputText} todos={todos} setTodoList={setTodoList} setStatus={setStatus} contractInstance={contractInstance} setContractInstance={setContractInstance} account={account} />
+    <h1></h1>
+    <Form inputText={inputText} setInputText={setInputText} todos={todos} setTodoList={setTodoList} setStatus={setStatus} contractInstance={contractInstance} setContractInstance={setContractInstance} account={userAddresss} createTasks={createTasks}/>
     <TodoList todos={todos} setTodoList={setTodoList} filterTodos={filterTodos} contractInstance={contractInstance} setContractInstance={setContractInstance}/>
     </div>
   );
